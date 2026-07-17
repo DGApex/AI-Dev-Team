@@ -1,0 +1,18 @@
+# Normalize line endings across platforms.
+# Default: let Git handle text detection and store LF in the repo.
+* text=auto eol=lf
+
+# Shell hooks MUST keep LF endings or they break on POSIX systems.
+*.sh text eol=lf
+
+# JS/MD/JSON are text; keep LF in the repo.
+*.js  text eol=lf
+*.md  text eol=lf
+*.json text eol=lf
+
+# Binaries — never touch.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary

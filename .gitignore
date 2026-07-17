@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────
+# Secrets & local-only config — NEVER commit these
+# (mirrors CLAUDE.md § Data Protection & Security)
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+credentials.json
+token.json
+*.pem
+*.key
+id_rsa*
+.claude/settings.local.json
+
+# ─────────────────────────────────────────────────────────────
+# Studio runtime state — regenerable and/or potentially sensitive
+# ─────────────────────────────────────────────────────────────
+.tmp/
+production/session-logs/
+.claude/worktrees/*
+!.claude/worktrees/.gitkeep
+
+# Project memory can hold sensitive context. The harness distribution
+# ships without any memory/, but if you build a real project on top of
+# this harness and your memories are private, uncomment the next line.
+# memory/
+
+# ─────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ─────────────────────────────────────────────────────────────
+# Node / web
+# ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# OS / editor cruft
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

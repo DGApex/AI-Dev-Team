@@ -1,0 +1,2 @@
+# Runtime directory for isolated agent git worktrees.
+# Contents are git-ignored; this file only preserves the directory.
