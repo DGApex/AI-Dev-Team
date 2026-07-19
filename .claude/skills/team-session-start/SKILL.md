@@ -131,11 +131,29 @@ actually available in this session (the available-skills list the harness
 provides; do NOT rely on globbing directories — plugin skills don't live in a
 folder you can scan):
 - Any **REQUIRED** skill missing → prominent warning in the briefing:
-  "⚠ Missing required global skill: `<name>` — install it; the studio depends
-  on it (see global-skills-map.md)."
+  "⚠ Missing required global skill: `<name>` — the studio depends on it."
 - Any **RECOMMENDED** skill missing → one soft line listing them.
 - Skills available in the session but absent from the map → flag the drift
   for `skill-curator` (one line, no action needed).
+
+**Then offer to install the missing ones** (do NOT just warn). For each missing
+REQUIRED skill — and, if the user opts in, any missing RECOMMENDED — run the
+**install flow** in `.claude/docs/global-skills-map.md` §6:
+1. Look the skill up in that map's §7 credits/sources table. If its origin is
+   `por verificar` (no confirmed repo), do NOT guess — say so and ask the user
+   for the source instead of installing.
+2. Ask **where to install** with `AskUserQuestion`, options in this order:
+   - **Global (recommended)** → `~/.claude/skills/<name>/` (here:
+     `C:\Users\<user>\.claude\skills\<name>\`) — shared across all projects.
+   - **Portable** → `.claude/skills/<name>/` in this repo — travels with the
+     harness, **but shadows/freezes** any future global copy (§5/§6); if chosen,
+     note the freeze in the session log.
+   - **Skip** → leave it missing (keep the warning).
+3. On global/portable, install from §7's `install` command into the chosen dir,
+   then verify `<target>/<name>/SKILL.md` exists and report where it landed.
+
+Batch it: list all missing installable skills, ask the target once per skill (or
+"install all missing globally?" if the user prefers), never install silently.
 
 **Notification format:** "Scaffold check — created: [list]. Already present: [list or 'everything else']." If nothing was created, say nothing and continue.
 
@@ -189,9 +207,10 @@ Combine the two outputs into a single briefing rendered inline:
 [grouped: existing skills in Skills/, plus team-* in .claude/skills/]
 
 === Skill dependencies (global-skills-map.md) ===
-[REQUIRED: all present ✓ / missing: list with ⚠]
+[REQUIRED: all present ✓ / missing: list with ⚠ + "offering install (step 0f)"]
 [RECOMMENDED missing: soft list, or omit if complete]
 [unmapped skills detected: list for skill-curator, or omit]
+[if any missing installable: "→ I can install these — global or portable? (§6)"]
 
 === Working tree ===
 Branch: <branch>

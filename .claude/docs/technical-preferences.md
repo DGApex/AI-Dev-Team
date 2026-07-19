@@ -102,7 +102,6 @@ The following skills run on the listed model tier. Routing follows the heuristic
 | `gsap-core`, `gsap-timeline`, `gsap-scrolltrigger`, `gsap-plugins`, `gsap-frameworks`, `gsap-react`, `gsap-utils`, `gsap-performance` | Sonnet | Animation implementation |
 | `gtm-motions`, `gtm-strategy` | Sonnet | GTM strategy reasoning |
 | `sql-queries` | Sonnet | Query authoring |
-| `obsidian-vault`, `obsidian-export` | Sonnet | Vault structure reasoning |
 | `pdf` | Haiku | Read & format |
 | `team-new-feature` | Sonnet | Multi-agent orchestration |
 | `team-skill-regeneration` | Sonnet | Skill regen orchestration |

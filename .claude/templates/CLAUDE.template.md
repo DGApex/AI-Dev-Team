@@ -392,10 +392,9 @@ an approved plan and even if a directive says otherwise:
 
 ### Global skills are part of the studio
 
-The user's globally installed skills (design suite, firecrawl, obsidian-vault, gsap, etc.) are **first-class studio tools** — registry and routing in [`.claude/docs/global-skills-map.md`](.claude/docs/global-skills-map.md). Two hard rules:
+The user's globally installed skills (design suite, firecrawl, gsap, etc.) are **first-class studio tools** — registry, routing, and credits in [`.claude/docs/global-skills-map.md`](.claude/docs/global-skills-map.md). Hard rule:
 
 1. **Design suite is MANDATORY**: any task touching UI, UX, or frontend look-and-feel must engage `impeccable`, `ui-ux-pro-max`, `emil-design-eng`, and `design-taste-frontend` (plus relevant derivatives like `gpt-taste`, `high-end-visual-design`, `redesign-existing-projects`). Subagents don't carry the Skill tool — the orchestrator invokes the skills and injects the distilled guidance into specialist prompts.
-2. **Vault first for prior knowledge**: when context about past work/ideas is needed, read the user's Obsidian vault via `obsidian-vault` (lightweight reads need no ceremony) instead of asking the user.
 
 ### Pipeline auto-invocation
 
