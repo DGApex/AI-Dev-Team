@@ -124,6 +124,23 @@ cierre block. Rewrite (do not append) so it reflects the state *at close*:
 - **Open questions / blockers** — anything waiting on the user or on an external answer
 - **Where things are** — the files touched this session, so the next session doesn't grep
 
+> 🔴 **"Rewrite, do not append" means the finished session is DELETED from this file,
+> not demoted.** Read that literally, because the plausible-looking alternative —
+> relabelling the outgoing session as `## 📕 Sesión anterior (Nª)` and writing the new
+> one above it — is how this file turns into a second chronology written for the wrong
+> reader. Each close copies the pattern it finds in the file rather than the rule
+> written here, so the drift compounds silently until `active.md` **exceeds the read
+> limit** at the next session's start. The file whose only job is fast recovery becomes
+> too big to read.
+>
+> Before deleting, check whether anything in the outgoing section lives ONLY there
+> (measurements, commit hashes, gotchas) and migrate it into that session's entry in
+> `session-log.md` first — that is careful work, not a copy-paste.
+>
+> `stop-state-reminder.sh` enforces this (invariant 1-quater): it **blocks** the Stop if
+> `active.md` carries a `Sesión anterior`-style heading or exceeds 400 lines. If it
+> fires, the fix is migrate-then-delete — never raise the ceiling.
+
 This file is what makes the Stop hook's freshness invariant pass. Writing it last,
 after the log, keeps its mtime newer than the project files.
 

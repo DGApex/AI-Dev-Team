@@ -106,10 +106,47 @@ EOF
         BALANCED=$(printf '%s' "$SENTINELS" | sed 's/\(OC\)*//')
         if [ "$N_OPEN" != "$N_CLOSE" ] || [ -n "$BALANCED" ]; then
             cat <<EOF
-{"decision": "block", "reason": "directives/session-log.md has malformed cierre sentinels: $N_OPEN '<!-- cierre -->' vs $N_CLOSE '<!-- /cierre -->', and they must be equal in number and strictly alternate (open, close, open, close...). Sequence found: $SENTINELS. The usual cause is rewriting a closing summary and leaving the previous draft below it with its own closing sentinel — which produces TWO contradictory summaries for the same session plus an orphan sentinel. Neither the SessionStart injection nor the check above can see this: the injection seds from the FIRST opening to the FIRST closing, so a stale duplicate underneath is invisible, and a signed contradictory summary is precisely what a future reader trusts instead of re-deriving. Fix: keep exactly one cierre block per session entry, delete the superseded draft entirely (not just its sentinel), and verify the newest entry's block is the FIRST in the file."}
+{"decision": "block", "reason": "directives/session-log.md has malformed cierre sentinels: $N_OPEN '<!-- cierre -->' vs $N_CLOSE '<!-- /cierre -->', and they must be equal in number and strictly alternate (open, close, open, close...). Sequence found: $SENTINELS. The usual cause is rewriting a closing summary and leaving the previous draft below it with its own closing sentinel — which produces TWO contradictory summaries for the same session plus an orphan sentinel. Neither the SessionStart injection nor the check above can see this: the injection seds from the FIRST opening to the FIRST closing, so a stale duplicate underneath is invisible, and a signed contradictory summary is precisely what a future reader trusts instead of re-deriving. Fix: keep exactly one cierre block per session entry, delete the superseded draft entirely (not just its sentinel), and verify the newest entry's block is the FIRST in the file. NOTE: quoting a sentinel literally in prose ALSO trips this check — the count is over bytes, and backticks do not exempt it. Refer to it as 'the closing sentinel' instead of reproducing it."}
 EOF
             exit 0
         fi
+    fi
+
+    # --- Invariant 1-quater: active.md is STATE, not a second chronology ---
+    # CLAUDE.md defines active.md as the detailed, machine-recoverable session
+    # state, and /close step 4 says "reescribe, no añadas". That rule is easy to
+    # break in a way that looks tidy: instead of deleting the finished session,
+    # demote it to a '## 📕 Sesión anterior (Nª)' heading and write the new one on
+    # top. Done every close, the file becomes mostly archive — a duplicate of
+    # session-log.md written for the wrong reader.
+    #
+    # The cost is not hypothetical. Past a few thousand lines active.md EXCEEDS
+    # THE READ LIMIT, and the session it was supposed to bootstrap starts on a
+    # fraction of it: the file whose whole job is fast recovery becomes too big to
+    # read. It cannot simply be truncated either, because by then some numbers
+    # exist ONLY there.
+    #
+    # This needs a guard rather than another sentence in the docs, because each
+    # close copies the pattern it finds in the file over the rule written
+    # elsewhere. The accreted heading is the signal; the line count is the backstop.
+    STATE_MAX_LINES=400
+    ARCHIVE_HEADING=$(grep -nEi '^#{1,6} .*sesi.{0,2}n anterior' "$STATE_FILE" 2>/dev/null \
+        | head -3 | tr -d '"' | tr '\n' ' ')
+    if [ -n "$ARCHIVE_HEADING" ]; then
+        cat <<EOF
+{"decision": "block", "reason": "production/session-state/active.md has grown archive headings — it is being used as a second chronology instead of as live state. Found: $ARCHIVE_HEADING. active.md holds ONLY the current session; a finished session is summarised into directives/session-log.md (newest entry on top) and then DELETED from here — /close step 4 is 'reescribe, no añadas'. Left unchecked this file grows until it exceeds the read limit at session start, which is the exact failure this guard exists to prevent. Fix: for each 'Sesión anterior' section, migrate anything that lives ONLY there into that session's entry in session-log.md (measurements, decisions, gotchas — this is careful work, not a cat), then delete the section."}
+EOF
+        exit 0
+    fi
+    STATE_LINES=$(wc -l < "$STATE_FILE" 2>/dev/null | tr -d ' ')
+    case "$STATE_LINES" in
+        ''|*[!0-9]*) STATE_LINES=0 ;;
+    esac
+    if [ "$STATE_LINES" -gt "$STATE_MAX_LINES" ]; then
+        cat <<EOF
+{"decision": "block", "reason": "production/session-state/active.md is $STATE_LINES lines, over the $STATE_MAX_LINES-line ceiling. It is live state for ONE session (target ~250 lines: current task, exact commands, paths, ports, versions), not a chronology — the chronology is directives/session-log.md. Past this size it stops doing its only job: a file that exceeds the read limit leaves the next session running on a fraction of it. Fix: move whatever is finished into the corresponding entry of session-log.md and rewrite this file down to the current session. If the current session genuinely needs more than $STATE_MAX_LINES lines of live state, that is a signal the detail belongs in a runbook next to the code (e.g. execution/<module>/README.md), which survives the next rewrite."}
+EOF
+        exit 0
     fi
 fi
 
