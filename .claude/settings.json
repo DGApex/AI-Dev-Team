@@ -16,7 +16,11 @@
     "ask": [
       "Edit(.claude/hooks/**)",
       "Edit(.claude/settings.json)",
-      "Edit(.claude/settings.local.json)"
+      "Edit(.claude/settings.local.json)",
+
+      "Write(.claude/hooks/**)",
+      "Write(.claude/settings.json)",
+      "Write(.claude/settings.local.json)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -45,7 +49,20 @@
       "Read(**/.env*)",
       "Read(**/credentials.json)", "Read(**/token.json)",
       "Read(**/*.pem)", "Read(**/*.key)", "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)", "Read(**/id_ecdsa*)",
+      "Read(**/*.p12)", "Read(**/*.pfx)",
       "Read(**/settings.local.json)",
+
+      "Read(**/.aws/credentials)", "Read(**/.git-credentials)",
+      "Read(**/.npmrc)", "Read(**/.netrc)", "Read(**/_netrc)",
+      "Read(**/.pgpass)", "Read(**/.htpasswd)",
+      "Read(**/.docker/config.json)",
+      "Read(**/*.jks)", "Read(**/*.keystore)", "Read(**/*.p8)",
+      "Read(**/*.kdbx)", "Read(**/*.ovpn)",
+      "Read(**/service-account*.json)",
+      "Read(**/secret.yaml)", "Read(**/secrets.yaml)",
+      "Read(**/secret.yml)", "Read(**/secrets.yml)",
+      "Read(**/secrets.json)", "Read(**/secrets.toml)",
 
       "Edit(**/.env)", "Edit(**/.env.local)", "Edit(**/.env.production)",
       "Edit(**/credentials.json)", "Edit(**/token.json)",
