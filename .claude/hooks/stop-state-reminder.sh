@@ -74,6 +74,43 @@ EOF
 EOF
         exit 0
     fi
+
+    # --- Invariant 1-ter: the cierre sentinels are BALANCED and ALTERNATING ---
+    # Invariant 1-bis only asks whether SOME '<!-- /cierre -->' exists, and the
+    # SessionStart hook seds from the FIRST opening to the FIRST closing. Both are
+    # individually correct, and together they are blind to a real failure mode:
+    # rewriting a cierre block can leave the previous draft below it WITH ITS OWN
+    # CLOSING SENTINEL. The file then carries two contradictory summaries for the
+    # same session — different test counts, one claiming a passed security review
+    # and the superseded one saying it is still pending — plus an unpaired
+    # sentinel waiting for the next entry to be prepended on top of it.
+    #
+    # Nothing breaks when this happens. The injected block is still the right one,
+    # and this hook still passes. THE MACHINERY IS FINE AND THE RECORD IS WRONG,
+    # and a signed contradictory summary in git history is exactly what a future
+    # reader trusts instead of re-deriving. The one time it occurred it was caught
+    # by git-lead REFUSING TO COMMIT IT — by a person reading, not by a guard
+    # firing. This is that guard.
+    #
+    # Cheap and total: openings and closings must be equal in number and must
+    # strictly alternate O,C,O,C,... Any orphan, duplicate or nested sentinel
+    # breaks one of the two conditions.
+    if [ -f "$LOG_FILE" ]; then
+        # One token per sentinel, in file order: O for open, C for close.
+        SENTINELS=$(grep -o '<!-- /\{0,1\}cierre -->' "$LOG_FILE" 2>/dev/null \
+            | sed -e 's|<!-- cierre -->|O|' -e 's|<!-- /cierre -->|C|' \
+            | tr -d '\n')
+        N_OPEN=$(printf '%s' "$SENTINELS" | tr -cd 'O' | wc -c | tr -d ' ')
+        N_CLOSE=$(printf '%s' "$SENTINELS" | tr -cd 'C' | wc -c | tr -d ' ')
+        # Strict alternation starting with O <=> the string is exactly (OC)*.
+        BALANCED=$(printf '%s' "$SENTINELS" | sed 's/\(OC\)*//')
+        if [ "$N_OPEN" != "$N_CLOSE" ] || [ -n "$BALANCED" ]; then
+            cat <<EOF
+{"decision": "block", "reason": "directives/session-log.md has malformed cierre sentinels: $N_OPEN '<!-- cierre -->' vs $N_CLOSE '<!-- /cierre -->', and they must be equal in number and strictly alternate (open, close, open, close...). Sequence found: $SENTINELS. The usual cause is rewriting a closing summary and leaving the previous draft below it with its own closing sentinel — which produces TWO contradictory summaries for the same session plus an orphan sentinel. Neither the SessionStart injection nor the check above can see this: the injection seds from the FIRST opening to the FIRST closing, so a stale duplicate underneath is invisible, and a signed contradictory summary is precisely what a future reader trusts instead of re-deriving. Fix: keep exactly one cierre block per session entry, delete the superseded draft entirely (not just its sentinel), and verify the newest entry's block is the FIRST in the file."}
+EOF
+            exit 0
+        fi
+    fi
 fi
 
 # --- Invariant 2: roadmap checkpoint ---
