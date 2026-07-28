@@ -46,7 +46,9 @@ determinista: SOPs, scripts, una red de delegación y hooks. Al modelo le queda 
 - 🔐 **La seguridad primero por defecto** — las reglas de permiso amurallan
   secretos y operaciones peligrosas; una compuerta de seguridad obligatoria corre
   antes de cualquier commit sensible.
-- 🧩 **6 skills de equipo + un workflow determinista de plan/build** con QA adversarial.
+- 🧩 **7 skills de equipo + un workflow determinista de plan/build** con QA adversarial.
+  `/start` y `/close` enmarcan cada sesión: uno lee el último resumen de cierre,
+  el otro escribe el siguiente.
 - 🌍 **Docs bilingües** — todo lo de cara al usuario está en inglés y español.
 
 ## Inicio rápido
@@ -92,8 +94,8 @@ ai-dev-studio-harness/
 ├── .claude/                 el harness en sí
 │   ├── agents/              22 definiciones de agente
 │   ├── docs/                8 documentos del studio (roster, red, reglas, principios…)
-│   ├── hooks/               10 scripts de shell del ciclo de vida
-│   ├── skills/              6 skills del proyecto (team-* + humanizer)
+│   ├── hooks/               10 scripts de shell del ciclo de vida + lib/payload.sh
+│   ├── skills/              7 skills del proyecto (team-* + humanizer)
 │   ├── templates/           CLAUDE.template.md — el contrato portable
 │   ├── workflows/           team-new-feature.js — workflow de plan/build
 │   ├── settings.json        permisos + cableado de hooks (se commitea)

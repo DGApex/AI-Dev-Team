@@ -117,6 +117,12 @@ invocable gate (Opus) that must pass before git-lead commits sensitive changes.
 **Pipeline:** orchestrator proposes a roadmap to the user (`AskUserQuestion`: fases + alcances/scope) → on accept, `producer` drafts `directives/roadmap.md` (phases = pregunta answered · entregables · exit criteria; in/out-of-scope) → `doc-keeper` links it from `project-overview.md` and seeds genuinely-deferred items into `backlog.md`. On accept **or** decline, flip the `roadmap-checkpoint: pending` sentinel to `done`/`declined` so the hook goes quiet.
 **Output:** `directives/roadmap.md` (or an explicit, recorded decline) — before build work begins.
 
+### 9. Session Close ⭐ (custom)
+**Trigger:** End of a working session — user says they're done, or `/close` is invoked manually. The mirror of **Project Onboarding** (`/start`).
+**Pipeline:** orchestrator reconstructs the session from evidence (git diff/log + file mtimes + `active.md`, never from memory alone) → drafts the `<!-- cierre -->` block + full entry at the TOP of `directives/session-log.md` [user approval] → rewrites `production/session-state/active.md` **last** (its mtime must stay newest or the Stop hook blocks) → `doc-keeper` syncs project-overview / backlog / roadmap sentinel / memory → optional `/team-git-checkpoint` → `.tmp/` purge + secrets/PII pass over everything just written.
+**Output:** A session-log entry whose `<!-- cierre -->` block is the next session's first context (injected verbatim by `session-start.sh`), plus a refreshed `active.md`.
+**Note:** `stop-state-reminder.sh` is only a backstop — it catches a *missing* summary, never a shallow one. The skill (`team-session-close`) is what makes the close real.
+
 ## Cross-Domain Communication Protocols
 
 ### Shared verification (`qa-tester` global edge)

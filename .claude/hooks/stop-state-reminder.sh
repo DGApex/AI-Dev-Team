@@ -26,19 +26,34 @@ LOG_FILE="directives/session-log.md"
 if [ -f "$STATE_FILE" ]; then
     # Only nudge when meaningful project files are newer than the state file.
     # Exclude VCS internals, caches, build artifacts, worktrees, and audit logs.
-    NEWER=$(find . -type f -newer "$STATE_FILE" \
-        -not -path "./.git/*" \
-        -not -path "./node_modules/*" \
-        -not -path "./.tmp/*" \
-        -not -path "./production/session-logs/*" \
-        -not -path "./.claude/worktrees/*" \
-        -not -path "*/.pytest_cache/*" \
-        -not -path "*/__pycache__/*" \
-        -not -path "*/.venv/*" \
-        -not -path "*/dist/*" \
-        -not -path "*/build/*" \
-        -not -path "*/.next/*" \
-        -not -path "*/coverage/*" \
+    #
+    # -prune, NOT -not -path: a -not -path filter still DESCENDS into the
+    # directory and tests every file inside it, so a node_modules with 40k files
+    # was being walked in full. This hook has a 10s timeout, and a find that
+    # times out fails SILENTLY — the invariant would stop existing on exactly
+    # the large projects where it matters most. -prune skips the subtree whole.
+    NEWER=$(find . \
+        \( -name .git \
+        -o -name node_modules \
+        -o -name .venv \
+        -o -name venv \
+        -o -name __pycache__ \
+        -o -name .pytest_cache \
+        -o -name .mypy_cache \
+        -o -name .ruff_cache \
+        -o -name dist \
+        -o -name build \
+        -o -name .next \
+        -o -name .nuxt \
+        -o -name .turbo \
+        -o -name .cache \
+        -o -name coverage \
+        -o -name target \
+        -o -path ./.tmp \
+        -o -path ./production/session-logs \
+        -o -path ./.claude/worktrees \
+        \) -prune -o \
+        -type f -newer "$STATE_FILE" -print \
         2>/dev/null | head -5 | tr -d '"' | tr '\n' ' ')
     if [ -n "$NEWER" ]; then
         cat <<EOF

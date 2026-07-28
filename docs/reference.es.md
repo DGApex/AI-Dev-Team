@@ -81,31 +81,39 @@ del ciclo de vida.
 | Hook | Evento | Propósito |
 |------|--------|-----------|
 | `session-start.sh` | SessionStart | Inyecta rama, commits recientes, el resumen de cierre más nuevo + índice de memoria en la sesión |
-| `route-intent.sh` | UserPromptSubmit | Detecta intención de agregar/editar y de diseño; recuerda al orquestador las autorizaciones vigentes de pipeline y suite de diseño |
+| `route-intent.sh` | UserPromptSubmit | Detecta intención de agregar/editar y de diseño **solo en el prompt del usuario**; recuerda al orquestador las autorizaciones vigentes de pipeline y suite de diseño |
 | `enforce-language.sh` | UserPromptSubmit | Inyecta el recordatorio de "dirígete siempre al usuario en español neutro" |
-| `validate-commit.sh` | PreToolUse (Bash) | Bloquea duro `rm -rf /`, escritura a `.env`, force-push a main; pregunta (soft) ante mensajes de commit sin referencia a issue/ADR |
+| `validate-commit.sh` | PreToolUse (Bash) | Bloquea duro `rm -rf /`, escritura a `.env`, force-push a main y **cualquier comando que revele el contenido de un archivo de secretos** (`cat`/`head`/`base64`/`cp`/`curl`, `python -c`, redirecciones `< .env`…); pregunta (soft) ante mensajes de commit sin referencia a issue/ADR |
 | `enforce-venv.sh` | PreToolUse (Bash) | Bloquea instalaciones pip global/de sistema; enseña la ruta de venv correcta para que el agente se auto-corrija |
 | `pre-compact.sh` | PreCompact | Vuelca el estado completo de la sesión + git status + archivos modificados recientemente antes de comprimir |
 | `post-compact.sh` | PostCompact | Recarga el estado de la sesión tras la compresión |
 | `log-agent.sh` | SubagentStart | Abre una entrada de auditoría por subagente |
 | `log-agent-stop.sh` | SubagentStop | Cierra la entrada de auditoría |
 | `stop-state-reminder.sh` | Stop | Bloquea el fin de sesión si hay archivos más nuevos que `active.md` o falta el resumen de cierre; dispara el Roadmap Checkpoint |
+| `lib/payload.sh` | *(librería, no es un hook)* | Helper compartido `payload_field`: extrae un campo del JSON del evento que llega por stdin. Lo cargan los hooks que lo necesitan |
 
 **Notas de portabilidad:** cada hook hace `cd` a `${CLAUDE_PROJECT_DIR}` primero y
 degrada con elegancia — el JSON se parsea vía `python`→`python3`→`py -3`→`grep`,
 de modo que funcionan en Git Bash de Windows donde `python` puede no estar en el
-PATH. Los hooks salen en silencio en un proyecto que aún no tiene archivos de
-estado (p. ej. este mismo repo del harness).
+PATH. Esa extracción ahora vive una sola vez en `.claude/hooks/lib/payload.sh`;
+quien la usa **protege el `source`** (`[ -f "$LIB" ] && . "$LIB"`) y lleva un
+fallback inline, para que un harness copiado a medias nunca bloquee todas las
+llamadas a herramientas. Los hooks que inspeccionan el prompt matchean **solo** el
+campo `prompt`, nunca el payload crudo: su `cwd` y su `transcript_path` llevan el
+nombre de la carpeta del proyecto y dispararían en cada prompt de un proyecto que
+viva en una carpeta llamada `landing` o `frontend`. Los hooks salen en silencio en
+un proyecto que aún no tiene archivos de estado (p. ej. este mismo repo del harness).
 
 ---
 
-## Skills (6)
+## Skills (7)
 
 Skills del proyecto en `.claude/skills/`. Se invocan con `/nombre` o desde el orquestador.
 
 | Skill | Qué hace |
 |-------|----------|
 | `team-session-start` (`/start`) | Bootstrap idempotente de todo el andamiaje del proyecto + carga de contexto; `producer` + `doc-keeper` sintetizan un briefing de estado. El primer paso canónico de toda sesión |
+| `team-session-close` (`/close`) | El espejo de `/start`: reconstruye la sesión desde evidencia (git diff/log + mtimes + `active.md`, nunca desde la memoria), escribe la entrada de session-log con su bloque `<!-- cierre -->`, reescribe `active.md` al final, sincroniza project-overview / backlog / roadmap / memory, ofrece checkpoint de git y hace una purga de `.tmp` + pasada de secretos/PII. Flags `--quick`, `--no-git` |
 | `team-new-feature` | Pipeline de feature de punta a punta: junta contexto → workflow de plan determinista (producer → technical-director → líder) tras una compuerta de aprobación → workflow de build (especialistas → QA adversarial) → checkpoint de git → log de docs. Obliga la suite de diseño en trabajo de UI |
 | `team-git-checkpoint` | `git-lead` analiza el working tree, propone rama + plan de commits; tras aprobación commitea, opcionalmente pushea / abre un PR. Compuertas condicionales de devops + seguridad, flujo de release/tag, logging de doc-keeper |
 | `team-library-recommendation` | `librarian` investiga una lista corta de 2–4 opciones con trade-offs; el líder de dominio elige; `doc-keeper` escribe un ADR Nygard y actualiza la lista de permitidos |
