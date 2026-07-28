@@ -184,6 +184,14 @@ fresh yes (Data Protection § 4).
 
 ## 8. Cleanup + safety pass
 
+- **Did this session touch `.claude/hooks/**`?** Then run
+  `bash .claude/hooks/tests/run-all.sh` before the checkpoint and paste the tally.
+  Hooks are the only code in the repo that runs on *every* tool call, and a broken
+  one fails quietly — it blocks legitimate work or, worse, stops guarding without
+  saying so. A hook silently reverted to a pre-fix version looks identical to a
+  working one until something it was supposed to catch gets through. If the suite
+  fails, the close does not proceed until it is green or the failure is explicitly
+  recorded in "Estado al cerrar".
 - **`.tmp/`** — purge intermediates, especially any containing personal data.
   Everything there is regenerable by definition. Ask before deleting anything that
   looks like it isn't.
