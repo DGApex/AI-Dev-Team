@@ -43,7 +43,9 @@ at — judgment and routing.
 - 🔐 **Security-first by default** — permission rules wall off secrets and
   dangerous operations; a mandatory security gate runs before any sensitive
   commit.
-- 🧩 **6 team skills + a deterministic plan/build workflow** with adversarial QA.
+- 🧩 **7 team skills + a deterministic plan/build workflow** with adversarial QA.
+  `/start` and `/close` bracket every session: one reads the last closing summary,
+  the other writes the next one.
 - 🌍 **Bilingual docs** — everything user-facing is in English and Spanish.
 
 ## Quick start
@@ -89,8 +91,8 @@ ai-dev-studio-harness/
 ├── .claude/                 the harness itself
 │   ├── agents/              22 agent definitions
 │   ├── docs/                8 studio docs (roster, lattice, rules, principles…)
-│   ├── hooks/               10 lifecycle shell scripts
-│   ├── skills/              6 project skills (team-* + humanizer)
+│   ├── hooks/               10 lifecycle shell scripts + lib/payload.sh
+│   ├── skills/              7 project skills (team-* + humanizer)
 │   ├── templates/           CLAUDE.template.md — the portable contract
 │   ├── workflows/           team-new-feature.js — plan/build workflow
 │   ├── settings.json        permissions + hook wiring (committed)
