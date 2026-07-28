@@ -107,6 +107,7 @@ The following skills run on the listed model tier. Routing follows the heuristic
 | `team-skill-regeneration` | Sonnet | Skill regen orchestration |
 | `team-library-recommendation` | Sonnet | Library research orchestration |
 | `team-session-start` (`/start`) | Sonnet | Multi-doc context loading |
+| `team-session-close` (`/close`) | Sonnet | Evidence reconstruction + multi-doc sync |
 
 All other skills default to Sonnet. When creating new skills, assign Haiku if the skill only reads and formats; assign Opus if it must synthesize 5+ documents with high-stakes output; otherwise leave unset (Sonnet).
 

@@ -141,9 +141,9 @@ This project also runs a 3-tier agent studio — **"Personal AI Dev Studio"** �
 - **Roster** (22 agents): see [`.claude/docs/agent-roster.md`](.claude/docs/agent-roster.md)
 - **Lattice & escalation paths**: see [`.claude/docs/agent-coordination-map.md`](.claude/docs/agent-coordination-map.md)
 - **Coordination rules**: see [`.claude/docs/coordination-rules.md`](.claude/docs/coordination-rules.md)
-- **Workflow patterns**: New Feature · Bug Fix · Sprint Cycle · Release Pipeline · Skill Regeneration · Library Recommendation
+- **Workflow patterns**: New Feature · Bug Fix · Sprint Cycle · Release Pipeline · Skill Regeneration · Library Recommendation · Roadmap Checkpoint · Session Close
 - **Hooks** (state recovery + audit): `.claude/hooks/`
-- **Skills**: the `Skills/` folder is owned by `skill-curator`. Run `/start` at the beginning of every session to orient yourself.
+- **Skills**: the `Skills/` folder is owned by `skill-curator`. Run `/start` at the beginning of every session to orient yourself, and `/close` at the end to persist it — they are a pair, and the `<!-- cierre -->` block one writes is the block the other reads.
 
 ### Living documentation (extends the rules above)
 
