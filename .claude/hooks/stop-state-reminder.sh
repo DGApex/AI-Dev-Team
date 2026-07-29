@@ -10,6 +10,17 @@
 
 INPUT=$(cat 2>/dev/null)
 
+# Every "reason" this hook emits is a JSON string, and several of them interpolate
+# text read from project files (headings, file paths). Stripping quotes is NOT
+# enough: a single backslash — and Windows paths are full of them — makes the
+# payload unparseable, so the consumer drops it and THE BLOCK NEVER HAPPENS. A
+# guard that fails open is worse than no guard, because nobody notices. Escape
+# backslash FIRST (or the escaping escapes its own escapes), then the quote, then
+# drop control characters, which JSON forbids raw.
+json_escape() {
+    tr '\n' ' ' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\000-\037'
+}
+
 # Anchor to the project root — hooks can inherit whatever cwd the session's
 # shell last visited (e.g. a worktree), which produces false positives.
 cd "${CLAUDE_PROJECT_DIR:-.}" 2>/dev/null || exit 0
@@ -54,7 +65,7 @@ if [ -f "$STATE_FILE" ]; then
         -o -path ./.claude/worktrees \
         \) -prune -o \
         -type f -newer "$STATE_FILE" -print \
-        2>/dev/null | head -5 | tr -d '"' | tr '\n' ' ')
+        2>/dev/null | head -5 | json_escape)
     if [ -n "$NEWER" ]; then
         cat <<EOF
 {"decision": "block", "reason": "Project files changed after production/session-state/active.md was last updated. Per the 'file is the memory' invariant, persist session state before finishing: (1) refresh the '<!-- cierre -->' closing-summary block at the TOP of the newest entry in directives/session-log.md so it tells the next session, in plain Spanish, what this session actually did/decided/left pending — the SessionStart hook injects that block as the next session's first context; (2) update the detailed state in active.md below (current task, key decisions, next steps). Changed files include: $NEWER"}
@@ -131,7 +142,7 @@ EOF
     # elsewhere. The accreted heading is the signal; the line count is the backstop.
     STATE_MAX_LINES=400
     ARCHIVE_HEADING=$(grep -nEi '^#{1,6} .*sesi.{0,2}n anterior' "$STATE_FILE" 2>/dev/null \
-        | head -3 | tr -d '"' | tr '\n' ' ')
+        | head -3 | json_escape)
     if [ -n "$ARCHIVE_HEADING" ]; then
         cat <<EOF
 {"decision": "block", "reason": "production/session-state/active.md has grown archive headings — it is being used as a second chronology instead of as live state. Found: $ARCHIVE_HEADING. active.md holds ONLY the current session; a finished session is summarised into directives/session-log.md (newest entry on top) and then DELETED from here — /close step 4 is 'reescribe, no añadas'. Left unchecked this file grows until it exceeds the read limit at session start, which is the exact failure this guard exists to prevent. Fix: for each 'Sesión anterior' section, migrate anything that lives ONLY there into that session's entry in session-log.md (measurements, decisions, gotchas — this is careful work, not a cat), then delete the section."}
@@ -163,7 +174,7 @@ if [ -f "$ROADMAP" ] && grep -q "roadmap-checkpoint: pending" "$ROADMAP" 2>/dev/
         -not -path "./node_modules/*" \
         -not -path "./.claude/*" \
         -not -path "./.tmp/*" \
-        2>/dev/null | head -1 | tr -d '"')
+        2>/dev/null | head -1 | json_escape)
     if [ -n "$ADR" ]; then
         cat <<EOF
 {"decision": "block", "reason": "A foundational decision exists ($ADR) but directives/roadmap.md is still a skeleton — the idea+investigation phase looks closed. Propose a programming roadmap to the user now (AskUserQuestion covering fases + alcances/scope). When the user accepts (you fill roadmap.md) or declines, flip the 'roadmap-checkpoint: pending' sentinel in roadmap.md to 'done'/'declined' so this stops firing."}

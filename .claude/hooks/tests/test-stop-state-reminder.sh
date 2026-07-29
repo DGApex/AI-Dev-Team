@@ -175,6 +175,56 @@ printf '\n## 📕 Sesión anterior (8ª)\n' >> "$PROJ/production/session-state/a
 touch -t "$STATE_STAMP" "$PROJ/production/session-state/active.md"
 check block "archive headings" "too long AND accreted: reports the CAUSE, not the symptom"
 
+# --- the reason must be PARSEABLE JSON, not merely contain the right words ---
+# check() substring-matches, and a substring matches just as well inside broken
+# JSON — which is why this failure mode survived the first version of this suite.
+# The real risk: the hook interpolates text read from project files, and a single
+# unescaped backslash (Windows paths are full of them) makes the payload
+# undecodable. The consumer drops it and THE BLOCK NEVER HAPPENS: a guard that
+# fails open, silently. Assert the escaping itself, not the wording.
+check_valid_json() {
+    local desc="$1" out
+    out=$(printf '%s' "${STDIN_JSON:-\{\}}" | CLAUDE_PROJECT_DIR="$PROJ" bash "$HOOK" 2>&1)
+    # JSON allows a backslash only in front of: " \ / b f n r t u.
+    # Consume the valid \\ pairs FIRST: grep scans every position, so in a
+    # correctly escaped "C:\\Users" it would otherwise read the second backslash
+    # of the pair as a lone one before "U" and fail a payload that is fine.
+    if printf '%s' "$out" | sed 's/\\\\//g' | grep -qE '\\[^"/bfnrtu]'; then
+        FAIL=$((FAIL+1)); printf '  FAIL  [invalid JSON escape] %s\n' "$desc"
+        printf '        output: %s\n' "$out"
+        return
+    fi
+    # Raw control characters are forbidden inside a JSON string — TAB (\011)
+    # included, which is exactly the one an earlier version of this class left
+    # out, making the tab case pass against a hook that did not escape at all.
+    # LF needs no exception: grep matches line by line and never sees it.
+    if printf '%s' "$out" | grep -q $'[\001-\037]'; then
+        FAIL=$((FAIL+1)); printf '  FAIL  [raw control char] %s\n' "$desc"
+        return
+    fi
+    PASS=$((PASS+1)); printf '  PASS  [json ] %s\n' "$desc"
+}
+
+setup_project
+printf '\n## 📕 Sesión anterior (9ª) — C:\\Users\\dev\\proyecto\n' \
+    >> "$PROJ/production/session-state/active.md"
+touch -t "$STATE_STAMP" "$PROJ/production/session-state/active.md"
+check block "archive headings" "windows path in the heading still blocks"
+check_valid_json "windows path in the heading: backslashes escaped, payload survives"
+
+setup_project
+printf '\n## 📕 Sesión anterior (9ª) — la sesión "anterior"\n' \
+    >> "$PROJ/production/session-state/active.md"
+touch -t "$STATE_STAMP" "$PROJ/production/session-state/active.md"
+check block "archive headings" "quotes in the heading still block"
+check_valid_json "quotes in the heading: payload stays parseable"
+
+setup_project
+printf '\n## 📕 Sesión anterior (9ª) —\ttabulada\n' \
+    >> "$PROJ/production/session-state/active.md"
+touch -t "$STATE_STAMP" "$PROJ/production/session-state/active.md"
+check_valid_json "tab in the heading: no raw control character reaches the JSON"
+
 # --- safety properties -----------------------------------------------------
 setup_project
 rm -f "$PROJ/production/session-state/active.md"
